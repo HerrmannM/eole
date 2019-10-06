@@ -1,0 +1,29 @@
+id    = i->i.
+
+succ  = n->x->y->(x ((n x) y)).
+
+mult  = n->m->x->(n (m x)).
+
+pair  = x->y->p->((p x) y).
+
+fst   = x->y->x.
+
+snd   = x->y->y.
+
+zero  = f->x->x.
+
+one   = succ zero.
+
+nextfact = (
+  p->(
+    with n1 = (p fst),
+    with n2 = (succ (p snd)),
+    ((pair ((mult n1) n2)) n2)
+  )
+).
+
+fact = (
+  n->( ((n nextfact) ((pair one) zero)) fst)
+).
+
+(fact (f->x->(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(x))))))))))))))))))))))) id id.

@@ -1,0 +1,11 @@
+// Chapter 2 page 14 - 15
+// Demonstrate how the two usual leftmost-outermorst and rightmost-innermost
+// cannot be optimal.
+// I = i->i.
+// D = d->d d.
+// M = z->(x->x I)(y->(D (y z))).
+// Note: we inline the I and the D by hand to avoid extra application.
+
+z->(x->x (I->I))(y->((D->D D)(y z))).
+
+// The optimal reduction is done in 4 steps.

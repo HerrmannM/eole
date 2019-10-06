@@ -1,0 +1,3 @@
+// Create garbage.
+// Launch with -m none to see what happens without the garbage collector
+(erase->i->i) (a->a).

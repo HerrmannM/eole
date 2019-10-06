@@ -1,0 +1,22 @@
+id    = i->i.
+
+succ  = n->f->x->(f (n f x)).
+pred  = n->f->x->n(g->h->h (g f))(u->x)(u->u).
+mult  = n->m->x->(n (m x)).
+
+zero  = f->x->x.
+one   = succ zero.
+
+true  = x->y->x.
+false = x->y->y.
+if    = b->then_f->else_f->b then_f else_f.
+
+is_zero = n->n (x->false) true.
+
+ycomb = f->(x-> f (x x)) (x-> f (x x)).
+
+fact_ = f -> n-> if (is_zero n) (one) (mult n (f (pred n))).
+
+fact = ycomb fact_.
+
+fact (succ (succ (succ zero))).

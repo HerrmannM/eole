@@ -1,0 +1,6 @@
+// Trigger a sink in the GC
+// Erase a bound abstraction.
+// Must do a bit of work, else the abstraction bound->bound is erased in one step and does not call the sink.
+// Does one β reduction, then collect everything
+// Launch with -m none to see what happens without the garbage collector
+(erase->(i->i)) (bound->(i->i i) bound).

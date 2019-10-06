@@ -1,0 +1,15 @@
+[package]
+name = "eole-parser"
+version = "0.1.0"
+description = "Éole Parser"
+authors = ["Matthieu Herrmann"]
+readme = "README.md"
+edition = "2018"
+build = "build.rs" # LALRPOP preprocessing
+
+[build-dependencies]
+lalrpop = "0.17.1"
+
+[dependencies]
+lalrpop-util = "0.17.1"
+regex = "0.2.1"

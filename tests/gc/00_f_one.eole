@@ -1,0 +1,4 @@
+I = x->((z->w->w)x x).
+f = (n->(n (a->b->(a(a(b)))) I)).
+one = x->y->x(y).
+f one.

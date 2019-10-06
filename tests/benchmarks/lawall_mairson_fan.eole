@@ -1,0 +1,52 @@
+// From Optimality and Inefficiency : What Isn't a Cost Model of the Lambda Calculus?
+// Section 3:
+// With the Church number 2 = λfλx.f(f(x))
+// Let Cn = λx.2(2(...(2x)))
+//               n times
+// Quoting:
+// "We use Cn to construct a term that normalizes in O(n) β-steps,
+// but requires O(2^n) book-keeping steps, mostly involving bracket and croissant interactions.
+// [Tested in ./lawall_mairson_bookkeeping.eole: We don't have that]
+//
+// We then use Cn to construct another term that contains no further β-redexes after O(n),
+// but the graph representation requires (2^n ) further fan interactions to normalize.
+// [Tested here: we have that]
+//
+// Section 3.3: Second application: locality and unnecessary fan interaction
+// Apply Cn to λxλy.yx
+
+d = f->x->f(f(x)).
+
+// N=10
+// βred: 33     Fan red: 3.161          reduction time <1sec
+Cn = x->d(d(d(d(d(d(d(d(d(d(x)))))))))).
+
+// N=15
+// βred: 48     Fan red: 98.443         reduction time <1sec
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x))))))))))))))).
+
+// N=16
+// βred: 51     Fan red: 196.757        reduction time 2sec
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))).
+
+// N=17
+// βred: 54     Fan red: 393.375        reduction time 9sec
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x))))))))))))))))).
+
+// N=18
+// βred: 57     Fan red: 786.601        reduction time 41sec
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))))).
+
+// N=19
+// βred: 60     Fan red: 1.573.043      reduction time 336sec (5m36s)
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x))))))))))))))))))).
+
+// N=20
+// βred: 63     Fan red: 3.145.917      reduction time 1700sec (28m20s)
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))))))).
+
+// N=30
+// You can try if you want to do heat your room for a loooooong time. Launch 1 per core for max heating efficiency.
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))))))))))))))))).
+
+Cn (x->y->(y x)).

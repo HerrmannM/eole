@@ -1,0 +1,8 @@
+// Should reduce to identity
+( (g->(g (g (x->x))))
+      (h->(
+            ( f->(f (f (z->z))))
+            ( w->(h (w (y->y))))
+          )
+      )
+).

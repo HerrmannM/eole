@@ -1,0 +1,23 @@
+// Chapter 2 page 17 -18
+// Example from Lévy.
+// Let I  = i->i
+// Let Fm = x->(x I x x ... x)   // m times x (after I)
+// Let Dn = x->(x x ... x)       // n times x
+// Let Gn = y->(Dn(y z))
+// Let Pmn = (Fm Gn)
+// Leftmost outermost reduction: m+4 beta reductions
+// Rightmost innermost reduction: n+3 beta reductions
+// Shortest strategy depends on n and m!
+
+// For m = 3 and n = 4
+z->
+with I = i -> i,
+with F3 = x -> (x I x x x),
+with D4 = x -> (x x x x),
+with G4 = y -> (D4 (y z) ),
+F3 G4.
+
+
+// With proper sharing, we only need 4 beta reductions (instead of 7)
+// Because we have 4 "with" expressions, we will have 4 more beta reductions.
+// However, we have a total of 44 interactions: 8 beta reductions and 36 fan interactions.

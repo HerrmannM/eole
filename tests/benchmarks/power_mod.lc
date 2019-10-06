@@ -1,0 +1,95 @@
+id = i->i.
+
+pair  = x->y->z->(z x y).
+fst   = x->y->x.
+snd   = x->y->y.
+
+true  = fst.
+false = snd.
+if    = b->then_f->else_f->b then_f else_f.
+
+
+
+zero    = f->x->x.
+one     = f->x->f x.
+two     = f->x->f (f x).
+three   = f->x->f (f (f x)).
+four    = f->x->f (f (f (f x))).
+five    = f->x->f (f (f (f (f x)))).
+
+
+succ    = a->f->x->f (a f x).
+
+plus    = a->a succ.
+
+times    = a->b->a (plus b) zero.
+
+pred    = a->f->x->a(g->h->h (g f))(u->x)(u->u).
+
+minus = a->b->a pred b.
+
+
+
+is_zero = n->n (x->false) true.
+
+leq = a -> b -> is_zero (minus a b).
+
+
+
+mod =
+  (a->b->(b (c->d->(c(e->(d(f->g->(f(e f g)))e))))
+              (c->(c(d->e->e)))
+              (c->(a(b(d->e->f->(d(g->(e g f))))(d->d)(d->e->(e d)))(b(d->e->d)(d->d)(d->d))))
+            )
+  ).
+
+
+
+nextfact = (
+  p->(
+    with n1 = (p fst),
+    with n2 = (succ (p snd)),
+    (pair (times n1 n2) n2)
+  )
+).
+
+fact = (
+  n->(n nextfact (pair one zero) fst)
+).
+
+
+
+
+six         = plus five one.
+seven       = plus five two.
+
+ten         = plus five five.
+thirteen    = plus ten three.
+
+twenty      = times two ten.
+
+thirty      = times ten three.
+thirty_one  = plus thirty one.
+
+hundred     = times ten ten.
+
+two_hundreds = times two hundred.
+
+four_hundreds = times two two_hundreds.
+
+height_hundreds = times two four_hundreds.
+
+sixteen_hundreds = times two height_hundreds.
+
+// Experiment!
+// Easy peasy
+mod (two_hundreds two_hundreds) (thirty_one).
+
+// Lemon squizy
+// mod (four_hundreds four_hundreds) (thirty_one).
+
+// Yeaaaah! :-)
+// mod (height_hundreds height_hundreds) (thirty_one).
+
+// Does not work with 8GB ram :-(
+// mod (sixteen_hundreds sixteen_hundreds) (thirty_one).

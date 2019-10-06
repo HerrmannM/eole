@@ -1,0 +1,7 @@
+// Chapter 2 page 36
+// This expression reduces in the church numeral two, with a graph different
+// from its initial encoding.
+// In other words: different graphs can represent the same lambda term.
+// We add church2 so we can compare the inital encoding (in the 1st graph).
+with church2 = a->b->(a (a b)),
+x->y->(z->(z (z y))) (w->(x w)).

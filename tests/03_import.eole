@@ -1,0 +1,6 @@
+// Test import and named import
+// Note: not implemented at the moment.
+read ./00_def.eole
+read ./00_def.eole as other
+
+id other::id.

@@ -1,0 +1,41 @@
+// From Optimality and Inefficiency : What Isn't a Cost Model of the Lambda Calculus?
+// Section 3:
+// With the Church number 2 = λfλx.f(f(x))
+// Let Cn = λx.2(2(...(2x)))
+//               n times
+//
+// Section 4.4: more trouble
+// The authors used this example to demonstrate how optimisation of backets/croissants
+// can get stuck. However, this example is also exponential in the number of fans...
+// Apply Cn to (λxλy(λa.aa)(λz(xy)z))
+
+d = f->x->f(f(x)).
+
+// N=10
+// βred: 45         Fan red: 6261       reduction time: <1sec
+Cn = x->d(d(d(d(d(d(d(d(d(d(x)))))))))).
+
+// N=15
+// βred: 65         Fan red: 196.790       reduction time: 7sec
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x))))))))))))))).
+
+// N=16
+// 16Go of RAM is not enough
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))).
+
+// N=17
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x))))))))))))))))).
+
+// N=18
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))))).
+
+// N=19
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x))))))))))))))))))).
+
+// N=20
+// n = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))))))).
+
+// N=30
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))))))))))))))))).
+
+Cn (x->y->(a->a a)(z->(x y)z)).

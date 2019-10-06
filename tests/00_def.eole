@@ -1,0 +1,12 @@
+// Simple definition test
+id = i->i.
+
+/*
+
+Also test the comments:
+This should not be run (check the generated graph with -g)
+id id.
+
+*/
+
+id.

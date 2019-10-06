@@ -1,0 +1,24 @@
+[package]
+name = "eole"
+version = "0.1.0"
+authors = ["Matthieu Herrmann"]
+description = """
+Éole "Évaluateur (Lévy-)Optimal de Lamdba Expression" is an experimental Lévy-optimal lazy lambda calculus evaluator.
+"""
+readme = "README.md"
+edition = "2018"
+
+[dependencies]
+clap = "2.33.0"
+
+[dependencies.eole-parser]
+version = "0.1.0"
+path = "eole-parser"
+
+[lib]
+name = "eolelib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "eole"
+path = "src/main.rs"

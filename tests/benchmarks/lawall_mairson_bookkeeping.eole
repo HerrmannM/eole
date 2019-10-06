@@ -1,0 +1,45 @@
+// From Optimality and Inefficiency : What Isn't a Cost Model of the Lambda Calculus?
+// Section 3:
+// With the Church number 2 = λfλx.f(f(x))
+// Let Cn = λx.2(2(...(2x)))
+//               n times
+// Quoting:
+// "We use Cn to construct a term that normalizes in O(n) β-steps,
+// but requires O(2^n) book-keeping steps, mostly involving bracket and croissant interactions.
+// [Tested here: we don't have that]
+//
+// We then use Cn to construct another term that contains no further β-redexes after O(n),
+// but the graph representation requires (2^n ) further fan interactions to normalize.
+// [Tested in ./lawall_mairson_fan.eole: We have that]
+//
+// Section 3.2:First analysis: bookkeeping overwhelms fan interaction
+// Apply Cn to λxλy.xy
+
+d = f->x->f(f(x)).
+
+// N=10
+// Cn = x->d(d(d(d(d(d(d(d(d(d(x)))))))))).
+
+// N=15
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x))))))))))))))).
+
+// N=16
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))).
+
+// N=17
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x))))))))))))))))).
+
+// N=18
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))))).
+
+// N=19
+// Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x))))))))))))))))))).
+
+// N=20
+// n = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))))))).
+
+// N=30
+// Go ahead!
+Cn = x->d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(d(x)))))))))))))))))))))))))))))).
+
+Cn (x->y->(x y)).

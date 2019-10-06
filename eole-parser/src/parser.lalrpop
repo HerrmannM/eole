@@ -1,0 +1,193 @@
+// modline
+// vi: ft=rust
+
+
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+// --- --- --- Preamble
+// Content is copied verbatim in the generated rust file.
+use crate::ast::*;
+use std::string::String;
+
+
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+// --- --- --- Grammar
+grammar;
+
+
+// --- --- --- Main text and sentences
+
+// A text is a list of sentences.
+// Sentence are Option<>, filter the None out.
+pub Text: Vec<Sentence> = {
+        Sentence* => <>.into_iter().filter_map(|s| s).collect()
+};
+
+
+// A sentence is an optionnal lambda term.
+// The option allows to manage the comments without a custom lexer.
+// However, we cannot put comment inside the terms
+Sentence: Option<Sentence> = {
+    LineComment => None,
+    BlockComment => None,
+    SLet => Some(Sentence::Let(<>)),
+    SRun => Some(Sentence::Run(<>)),
+    SRead1 => Some(Sentence::Read(<>)),
+    SRead2 => Some(Sentence::Read(<>)),
+};
+
+// Line comment: from // to the end of line
+LineComment: () = r"//.*";
+
+// A Block comment. Does not check for nested comments.
+// Note: (?s:.) puts the 's' flag on '.', allowing it to match '\n'
+
+BlockComment: () = r"/\*(?s:.)*\*/";
+
+
+// --- --- --- Top level Sentences
+
+// Top level let definition
+// Text must start in the first column
+SLet: SLet = <n:Id> "=" <b:Term> "." => SLet{vname:n, body:b};
+
+// Top level term
+SRun: SRun = <Term> "." => SRun{term:<>};
+
+// Import
+// Hacking the lexer...
+SRead1: SRead = <RPath> => SRead{path:read_process(<>), name:None};
+SRead2: SRead = <p:RPath> "as" <n:Id> => SRead{path:read_process(p), name:Some(String::from(n))};
+
+// Path: a path starts with './' or '/' and is made of alaphanumeric characters and with '/'
+// Cannot finish by /
+RPath: String = {
+    r"read([ \t\r])+\./([a-zA-Z0-9_\./])+[a-zA-Z0-9_\.]" => String::from(<>),
+    r"read([ \t\r])+/([a-zA-Z0-9_\./])+[a-zA-Z0-9_\.]" => String::from(<>),
+};
+
+
+
+
+// --- --- --- Lambda term
+
+// A lambda term. Starts at the lowest precedence
+Term = Term00;
+
+// A Lambda term: precedence 00 (lowest)
+Term00:Box<Term> = {
+    // Abstraction
+    <vn:Id> "->" <b:Term> => Box::new(Term::Lambda{vname:vn, body:b}),
+    // Definition
+    "with" <vn:Id> "=" <v:Term> "," <b:Term> =>
+        Box::new(Term::App{fun:Box::new(Term::Lambda{vname:String::from(vn), body:b}), arg:v}),
+    // Next precedence
+    Term01
+};
+
+// A lambda term: precedence 01
+Term01:Box<Term> = {
+    // Application.
+    <f:Term01> <a:Term02> => Box::new(Term::App{fun:f, arg:a}),
+    // Next precedence
+    Term02
+};
+
+// A lambda term: precedence 02
+Term02:Box<Term> = {
+    // Variable
+    <vn:QId> => Box::new(Term::Sym{vname:vn}),
+    // Loop on low precedence with ( )
+    "(" <t:Term00> ")" => t
+};
+
+
+
+// --- --- --- Identifier
+
+// Identifier
+Id: String = {
+  <s:r"([A-Za-z]|_)([A-Za-z0-9]|_)*">  => String::from(s)
+};
+
+// Qualified identifier
+QId:String = {
+    <h:(Id "::")+> <l:Id> => {
+        h.into_iter().map(|s|String::from(s.0)).collect::<Vec<String>>().join("::") + &l
+    },
+
+
+    Id
+}
+
+
+
+
+
+
+// --- Last working
+//// --- Lexer
+//match {
+//    r"[a-z]\w*" => identifier,
+//    "!", "->", "=",
+//    "(", ")",
+//    "let", "run",
+//    ",", "."
+//}
+//// --- Parser
+//pub LText:Vec<LSentence> = {
+//    => Vec::new(),
+//    <t:LText> <h:LSentence> => {
+//        let mut v = t;
+//        v.push(h);
+//        v
+//    }
+//}
+// --- --- Sentence
+//LSentence:LSentence = {
+//    "let" <id:identifier> "=" <body:LTerm> "." =>
+//        LSentence::Let(LDef{vname:String::from(id), body:body}),
+//
+//
+//    "run" <LTerm> "." =>
+//        LSentence::Run(LRun{term:<>})
+//}
+//
+//
+//
+//
+//// --- --- Lambda term
+//// A term can be an application, an abstraction or a variable
+//LTerm:Box<LTerm> = {
+//    <id:identifier> "->" <body:LTerm> => Box::new(LTerm::Lambda{vname:String::from(id), body}),
+//    "!" <id:identifier> "->" <body:LTerm> => Box::new(LTerm::Lambda{vname:String::from(id), body}),
+//    "let" <id:identifier> "=" <arg:LTerm> "," <body:LTerm> => Box::new(LTerm::App{fun:Box::new(LTerm::Lambda{vname:String::from(id), body:body}), arg:arg}),
+//    LTermMed,
+//}
+//
+//LTermMed:Box<LTerm> = {
+//    <f:LTermMed> <a:LTermHigh> => Box::new(LTerm::App{fun:f, arg:a}),
+//    LTermHigh
+//}
+//
+//LTermHigh:Box<LTerm> ={
+//    identifier => Box::new(LTerm::Sym{vname:String::from(<>)}),
+//    "(" <LTerm> ")",
+//}
+
+// --- ---- Other lambda test
+// Lowest precedence
+// LTerm:Box<LTerm> = {
+//     "!" <id:identifier> "->" <body:LTerm> => Box::new(Lambda{vname:String::from(id), body}),
+//     "let" <id:identifier> "=" <arg:LTerm> "," <body:LTerm> => Box::new(App{fun:Box::new(Lambda{vname:String::from(id), body:body}), arg:arg}),
+//     LTermMed,
+// }
+// 
+// LTermMed:Box<LTerm> = {
+//     <f:LTermMed> <a:LTerm> => Box::new(App{fun:f, arg:a}),
+//     LTermHigh
+// }
+// 
+// LTermHigh:Box<LTerm> ={
+//     identifier => Box::new(Sym{vname:String::from(<>)}),
+//     "(" <LTerm> ")",
+// }

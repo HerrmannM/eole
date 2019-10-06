@@ -1,0 +1,8 @@
+// This one loops forever.
+// Use the -r flag to stop the reduction, e.g -r 20
+// Looking at all the graphs illustrates how the lazy labeling (the "light oracle") behaves.
+// At the moment, the 'full' strategy is growing in memory as it does not properly clean all the fan history (a stack...).
+// However, it does not grow in the number of nodes.
+// The lazy version does not grow at all.
+delta = d->d d.
+delta delta.

@@ -1,0 +1,11 @@
+// Chapter 2 page 27
+// Example use to show the optimal reduction algorithm.
+//   δ (h->δ( h I ))
+// Best strategy in syntaxic universe: 8 βreds
+// Here: 7β reds (and 12 fan interactions)
+//
+// Interesting to compare with the graphs produced by Éole!
+// Try both in full (default) and lazy (-s lazy) strategy
+
+// We inline everything so we are as close as possible to the graphs in the book.
+(D->D D) (h->(D->D D) (h (I->I) )).
