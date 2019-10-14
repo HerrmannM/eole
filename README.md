@@ -2,7 +2,7 @@
 A Lévy-optimal lambda evaluator without oracle
 
 ## Warning
-Éole is *not proven correct*.
+Éole is *not proven correct* yet. This is a work in progress.
 It may actually not work!
 However, if it does not work for the full untyped lambda calculus, it may work for a fragment.
 
@@ -44,11 +44,12 @@ I like to think (probably inaccurately) about optimal reductions as:
 
 ### Éole approach
 Éole changes are:
-0. Its interaction nets are directed
-0. It has two kinds of fans in:
-    0. Stem fans, which are "sharer" and do not have a fan out counterpart
-    0. Differentiated fans in, which with their fans out counterpart create "share boundaries"
-0. A lazy labelling of differentiated fans in.
+
+1. Its interaction nets are directed
+1. It has two kinds of fans in:
+    * Stem fans, which are "sharer" and do not have a fan out counterpart
+    * Differentiated fans in, which with their fans out counterpart create "share boundaries"
+1. A lazy labelling of differentiated fans in.
 
 Stem fans differentiated themselves when crossing a lambda abstraction node.
 A new unique label is created and assigned to the now differentiated fan in (going down the body of the abstraction)
