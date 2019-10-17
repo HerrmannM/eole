@@ -4,6 +4,6 @@
 // To test the result, we count the number of closing parentheses.
 //      0 <=> (f->(x->x)) => 2 ')'
 // 65 536 <=> (f->(x-> (f...(f x)..) )) => 65 538 ')'
-// So use the following command: echo $(($(./launch.sh tests/perf_readback.eole | tr -cd ')' | wc -c) - 2)) 
+// So use the following command: echo $(($(./launch.sh tests/07_perf_readback.eole | tr -cd ')' | wc -c) - 2)) 
 c2 = s->z->s(s z).
 (((c2 c2) c2) c2).
