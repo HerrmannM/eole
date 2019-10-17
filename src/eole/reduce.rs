@@ -284,7 +284,7 @@ fn locate_next_destructor<MyGC:GC>(
 
 
 #[inline]
-fn get_matching_fan<MyGC:GC>(net:&Net::<MyGC>, fan_out_l:u64, history:&Vec<(Vertex, net::NodeKind)>) -> Option<Port> {
+pub fn get_matching_fan<MyGC:GC>(net:&Net::<MyGC>, fan_out_l:u64, history:&Vec<(Vertex, net::NodeKind)>) -> Option<Port> {
     let mut lab_skip:HashMap<u64, i64> = HashMap::new();
 
     for (v, k) in (history.iter()).rev() {

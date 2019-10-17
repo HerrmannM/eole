@@ -179,8 +179,8 @@ fn to_network_<MyGC:GC>(term:&Box<Term>, up:Vertex, net: &mut Net<MyGC>, env: &m
 /// Public conversion function.
 /// Assume that the network is plugged on 'net_root', which is the case if you used the 'to_net' function.
 pub fn from_net<MyGC:GC>(net:&Net<MyGC>, limit:Option<usize>) -> Option<Box<Term>> {
-    let mut stack = vec![];
-    from_net_(net, &mut stack, Net::<MyGC>::ROOT_VERTEX, limit)
+    let mut history = vec![];
+    from_net_(net, &mut history, Net::<MyGC>::ROOT_VERTEX, limit)
 }
 
 /// Record the label of a crossed fan in and the port used to enterd it.
@@ -217,7 +217,7 @@ fn lookup_port(stack:&mut FanStack, lb:Label) -> Option<Port> {
 /// i.e. both the source and target vertex.
 /// The source vertex is the argument, and the target vertex (which represent the current node)
 /// is looked up in the graph.
-fn from_net_<MyGC:GC>(net:&Net<MyGC>, stack:&mut FanStack, src:Vertex, limit:Option<usize>) -> Option<Box<Term>> {
+fn from_net_<MyGC:GC>(net:&Net<MyGC>, history:&mut Vec<(Vertex,NodeKind)>, src:Vertex, limit:Option<usize>) -> Option<Box<Term>> {
     // Check the limit
     let lim = match limit {
         None => Some(None),
@@ -241,7 +241,7 @@ fn from_net_<MyGC:GC>(net:&Net<MyGC>, stack:&mut FanStack, src:Vertex, limit:Opt
                     let bname = String::from(vname) + &tgt_index.to_string();
                     if tgt_port.0 == 0 {
                         // Entering by 'up' (Main): analyse the body and create the abstraction.
-                        from_net_(net, stack, mkv(tgt_index, 1), new_limit)
+                        from_net_(net, history, mkv(tgt_index, 1), new_limit)
                         .map(|body|{ Box::new(Lambda{vname:bname, body}) })
                     } else {
                         Some(Box::new(Sym{vname:bname}))
@@ -251,12 +251,14 @@ fn from_net_<MyGC:GC>(net:&Net<MyGC>, stack:&mut FanStack, src:Vertex, limit:Opt
                 // Fan out: lookup the associated port and follow it.
                 CstrK::FanOut(label) => {
                     assert_eq!(tgt_port.0, 0, "Should not enter a fan out node through an auxiliary port");
-                    match lookup_port(stack, *label) {
+                    match reduce::get_matching_fan(net, *label, &history){
+                        None => Some(Box::new(Sym{vname:String::from("∆")})),
                         Some(port) => {
-                            // println!("Index {}    Label {}    out {:?}      {:?}", tgt_index, *label, port, stack);
-                            from_net_(net, stack, mkv(tgt_index, port.0), new_limit)
+                            history.push((tgt, tgt_node.0.clone()));
+                            let res = from_net_(net, history, mkv(tgt_index, port.0), new_limit);
+                            history.pop();
+                            res
                         }
-                        None => Some(Box::new(Sym{vname:String::from("∆")}))
                     }
                 }
             }
@@ -268,10 +270,9 @@ fn from_net_<MyGC:GC>(net:&Net<MyGC>, stack:&mut FanStack, src:Vertex, limit:Opt
                 // Should not be entered by the port 1
                 DstrK::Apply => {
                     assert_eq!(tgt_port.0, 1, "Should enter an app through aux1 port");
-                    let mut st = stack.clone();
-                    from_net_(net, &mut st, main(tgt_index), new_limit)
+                    from_net_(net, history, main(tgt_index), new_limit)
                     .and_then(|fun|
-                        from_net_(net, stack, mkv(tgt_index, 2), new_limit)
+                        from_net_(net, history, mkv(tgt_index, 2), new_limit)
                         .and_then(|arg| Some(Box::new(App{fun,arg})) )
                     )
                 }
@@ -283,20 +284,25 @@ fn from_net_<MyGC:GC>(net:&Net<MyGC>, stack:&mut FanStack, src:Vertex, limit:Opt
                     // Record the pair label/port if it is a paired fan in
                     match in_status {
                         FIStatus::Labeled(l) => {
-                            stack.push((*l, tgt_port));
-                            // println!("Index {}    Label {:?}    push {:?}", tgt_index, *l, tgt_port);
+                            history.push((tgt, tgt_node.0.clone()));
                             // Exit by the main port
-                            let res = from_net_(net, stack, main(tgt_index), new_limit);
-                            stack.pop();
+                            let res = from_net_(net, history, main(tgt_index), new_limit);
+                            history.pop();
                             res
                         }
-                        FIStatus::Stem => from_net_(net, stack, main(tgt_index), new_limit)
+                        FIStatus::Stem => from_net_(net, history, main(tgt_index), new_limit)
                     }
                 }
             }// End of Destr(kind) => match kind
         }// End of match &tgtNode.0
     })// End of closure
 }
+
+
+
+
+
+
 
 
 
