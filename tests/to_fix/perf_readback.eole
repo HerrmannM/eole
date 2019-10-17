@@ -1,0 +1,15 @@
+c2 = s->z->s(s z).
+
+mod =
+  (a->b->(b (c->d->(c(e->(d(f->g->(f(e f g)))e))))
+              (c->(c(d->e->e)))
+              (c->(a(b(d->e->f->(d(g->(e g f))))(d->d)(d->e->(e d)))(b(d->e->d)(d->d)(d->d))))
+            )
+  ).
+
+// Graph ok for:
+(((c2 c2) c2) c2).
+// However, the readback is way to slow.
+// Even if this amount to output 2^16 application, it should be doable without exploding the memory...
+// Can be tested with (2^16 % 11 = 9)
+//mod (((c2 c2) c2) c2) (f->x->(f(f(f(f(f(f(f(f(f(f(f(x))))))))))))).

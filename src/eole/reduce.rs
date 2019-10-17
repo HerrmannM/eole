@@ -2,6 +2,8 @@ use super::compactor::{self, Compactor};
 use super::gc::GC;
 use super::net::{self, *};
 
+use super::super::conversion;
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::marker::PhantomData;
@@ -134,7 +136,7 @@ pub fn get_reducer_lazy<'a, MyGC: GC, MyCPTR: Compactor>(
 /// The full reducer will avoid that.
 /// Note that this is not an implementation of a "strict" (or "eager") evaluation as the argument
 /// in a function call is not reduced before the function.
-pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
+pub fn get_reducer_full_<'a, MyGC: GC, MyCPTR: Compactor>(
     should_compact: &'a dyn Fn(&Net<MyGC>)->bool,
     mut action: Box<dyn FnMut(&Net<MyGC>, (usize, usize, &Vec<Vertex>)) + 'a>
     ) ->  impl FnMut(&mut Net<MyGC>, bool, usize) + 'a {
@@ -149,7 +151,8 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
             let mut stack: Vec<Vertex> = vec![net.follow(root)];
             let mut backtracking = false;
 
-            // println!("\nRoots:\n{:?}", roots);
+             //println!("\nRoots:\n{:?}", roots);
+             //println!("Root:\n{:?}", root);
 
             while !stack.is_empty() {
                 if test_credit && credit == 0 { break; }
@@ -337,7 +340,7 @@ fn lookup_port(stack: &mut FanStack, lb: Label) -> Option<Port> {
         None => None,
         Some(idx) => {
             let res = stack.get(idx).map(|lp| (lp.1));
-            stack[idx].0 = 0;
+            //stack[idx].0 = 0;
             res
         }
     }
@@ -349,4 +352,186 @@ fn as_constr<MyGC: GC>(net: &Net<MyGC>, index: usize) -> CstrK {
         NodeKind::CstrK(c) => c.clone(),
         _ => panic!("As Constructor: found something else"),
     }
+}
+
+
+
+// ------------------------------------------------------------------------------------------------
+pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
+    should_compact: &'a dyn Fn(&Net<MyGC>)->bool,
+    mut action: Box<dyn FnMut(&Net<MyGC>, (usize, usize, &Vec<Vertex>)) + 'a>
+    ) ->  impl FnMut(&mut Net<MyGC>, bool, usize) + 'a {
+
+    move |net:&mut Net<MyGC>, test_credit:bool, mut credit:usize|{
+
+        // History stack
+        let mut history: Vec<(Vertex, net::NodeKind)> = vec![];
+
+        // Main loop
+        loop {
+            if test_credit && credit == 0 { break; }
+
+            // Check the history of nodes:
+            match history.pop(){
+                // Empty: locate the next destructor starting from the root
+                None => {
+                    match locate_next_destructor(net, &mut history, Net::<MyGC>::ROOT_VERTEX) {
+                        None => { return; }
+                        Some(vert_kind) => {
+                            dprintln!("Push {:?}", vert_kind);
+                            history.push(vert_kind);
+                        }
+                    }
+                }
+                // We have something
+                Some(head) => {
+                    let (vertex, kind) = &head;
+                    let (index, port) = vertex.as_tuple();
+                    assert!(net.get_node(index).1!=[Net::<MyGC>::NULL; 3], "baam");
+                    match kind {
+                        NodeKind::CstrK(CstrK::Abs(_,_)) => { /* */ }
+
+                        NodeKind::CstrK(CstrK::FanOut(l)) => { /* */ }
+
+                        // Destructor: follow main
+                        NodeKind::DstrK(d) => {
+                            let target_v = net.follow(main(index));
+                            let (target_i, target_p) = target_v.as_tuple();
+                            assert!(net.get_node(target_i).1!=[Net::<MyGC>::NULL; 3], "baam");
+                            match &net.get_node(target_i).0 {
+                                // Target Constructor
+                                NodeKind::CstrK(c) => {
+                                    if target_p.0 == 0 {
+                                        // Interaction.
+                                        // Manage the credit
+                                        if test_credit {credit-=1;}
+                                        let c = c.clone();
+                                        net.interact(index, *d, target_i, c);
+                                        // GC and compaction
+                                        MyGC::do_gc(net);
+                                    } else {
+                                        // No interaction. Must be an abstraction on port 2
+                                        if let CstrK::FanOut(_) = c { panic!("Reaching a fan out by an aux port"); }
+                                        assert!(target_p.0 == 2, "Reaching an Abstraction by the body");
+                                        // Backtrack until we find an application;
+                                        // visit its argument
+                                        dprintln!("POPING FROM {:?}", head);
+                                        history.push(head); // Must be done to take care of the current node
+                                        loop {
+                                            match history.pop(){
+                                                None => {
+                                                    // dprintln!("Stop with empty history");
+                                                    return;
+                                                } // End of the process
+                                                Some((v,k)) => {
+                                                    let hl = history.len();
+                                                    let (i,p) = v.as_tuple();
+                                                    dprintln!("POP {:?}", i);
+                                                    assert!(net.get_node(i).1!=[Net::<MyGC>::NULL; 3], "baam");
+                                                    match k {
+                                                        NodeKind::DstrK(DstrK::Apply) => {
+                                                            match locate_next_destructor(&net, &mut history, mkv(i,2)) {
+                                                                None => { history.truncate(hl); } // loop. Remove items added by locate next
+                                                                Some(c) => {
+                                                                    dprintln!("Restart with {:?}", c);
+                                                                    history.push(c);
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                        _ => {} // Loop
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                // Target Destructor
+                                // Destructor: stack and relaunch
+                                NodeKind::DstrK(d) => {
+                                    history.push(head);
+                                    history.push((target_v, NodeKind::DstrK(*d)));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Get the next constructor.
+/// Also update the history
+fn locate_next_destructor<MyGC:GC>(
+    net:&Net::<MyGC>, history:&mut Vec<(Vertex, net::NodeKind)>, mut base:Vertex
+    ) -> Option<(Vertex, net::NodeKind)> {
+    loop {
+        let next_v = net.follow(base);
+        let (next_i, next_p) = next_v.as_tuple();
+        assert!(net.get_node(next_i).1!=[Net::<MyGC>::NULL; 3], "baam");
+        let next_n = net.get_node(next_i);
+        //
+        match &next_n.0 {
+            NodeKind::CstrK(CstrK::Abs(_,_)) => match next_p.0 {
+                0 => {
+                    history.push((next_v, next_n.0.clone()));
+                    base = mkv(next_i, 1);
+                }
+                2 => {return None;}
+                _ => {panic!("Reaching an abstraction by the body");}
+            }
+            NodeKind::CstrK(CstrK::FanOut(l)) => {
+                assert!(next_p.0 == 0, "Fan out must be entered by the main port");
+                match get_matching_fan(net, *l, history) {
+                    None => {
+                        let path = Path::new("generated");
+                        conversion::do_graph(net, path, 999999);
+                        panic!("Cannot pair fan out {:?}\n{:?}",(next_i, l), history);
+                    }
+                    Some(p) => {
+                        history.push((next_v, next_n.0.clone()));
+                        base = Vertex::new(next_i, p);
+                    }
+                }
+
+            }
+            NodeKind::DstrK(d) => {
+                return Some((next_v, NodeKind::DstrK(*d)));
+            }
+        }
+    }
+}
+
+
+fn get_matching_fan<MyGC:GC>(net:&Net::<MyGC>, fan_out_l:u64, history:&Vec<(Vertex, net::NodeKind)>) -> Option<Port> {
+    let mut lab_skip:HashMap<u64, i64> = HashMap::new();
+
+    for (v, k) in (history.iter()).rev() {
+        assert!(net.get_node(v.get_index()).1!=[Net::<MyGC>::NULL; 3], "baam");
+        match k {
+            NodeKind::CstrK(CstrK::FanOut(l)) => {
+                *lab_skip.entry(*l).or_insert(0) += 1;
+            }
+
+            NodeKind::DstrK(DstrK::FanIn(FIStatus::Labeled(l))) => {
+                match lab_skip.get_mut(l) {
+                    None => {
+                        if *l == fan_out_l { return Some(v.get_port()); }
+                    }
+                    Some(nb) => {
+                        // Found
+                        if *nb == 0 {
+                            if *l == fan_out_l { return Some(v.get_port()); }
+                        }
+                        else { *nb -=1; }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Not found
+    return None;
 }
