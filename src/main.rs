@@ -314,15 +314,12 @@ fn file_run<'a, 'b, MyGC: GC, MyCPTR: Compactor>(
         RedOpt::FULL => {
             // "Action" function, based on the graph_opt
             // Specific per reduction kind
-            let do_graph: Box<dyn FnMut(&Net<MyGC>, (usize, usize, &Vec<net::Vertex>))> =
+            let do_graph: Box<dyn FnMut(&Net<MyGC>, (usize, &Vec<(net::Vertex, net::NodeKind)>))> =
                 match graph_opt {
                     GraphOpt::ALL(folder) => Box::new(
-                        move |net: &Net<MyGC>, (idx, r, s): (usize, usize, &Vec<net::Vertex>)| {
-                            conversion::do_graph_full(net, folder, step.get(), idx, r, s);
+                        move |net: &Net<MyGC>, (idx, s): (usize, &Vec<(net::Vertex, net::NodeKind)>)| {
+                            conversion::do_graph_full(net, folder, step.get(), idx, s);
                             *step.get_mut() += 1;
-                            // TEST
-                            // let res = conversion::from_net(&net, None).unwrap();
-                            // println!("{}", res);
                         },
                     ),
 

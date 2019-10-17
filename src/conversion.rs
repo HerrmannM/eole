@@ -621,7 +621,7 @@ pub fn do_graph_lazy<MyGC:GC>(net: &Net<MyGC>, folder_path:&Path, step:usize,
 
 
 pub fn do_graph_full<MyGC:GC>(net: &Net<MyGC>, folder_path:&Path, step:usize,
-                               destr_index:usize, root_index:usize, stack:&Vec<Vertex>){
+                               destr_index:usize, stack:&Vec<(Vertex, net::NodeKind)>){
 
     // Create the file
     let file_path = folder_path.join(format!("graph_{:06}.dot",step));
@@ -636,17 +636,13 @@ pub fn do_graph_full<MyGC:GC>(net: &Net<MyGC>, folder_path:&Path, step:usize,
     let d = net.get_node(destr_index);
     let dn = get_node_name(destr_index, &d.0);
     let mut extra:String = (
-        format!("    {}[color=green, penwidth=5];\n", dn)
+        format!("    {}[style=filled, color=green, penwidth=5];\n", dn)
     );
 
-    let r = net.get_node(root_index);
-    let rn = get_node_name(root_index, &r.0);
-    extra.push_str(&format!("    {}[color=black, penwidth=5];\n", rn));
-
-    for v in stack {
+    for (v, k) in stack {
         let i = v.get_index();
         let nn = get_node_name(i, &net.get_node(i).0);
-        extra.push_str(&format!("    {}[color=violet, penwidth=5];\n", nn));
+        extra.push_str(&format!("    {}[style=filled, penwidth=5];\n", nn));
     }
 
     // Create the graph
