@@ -189,6 +189,13 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
                                         net.interact(index, *d, target_i, c);
                                         // GC and compaction
                                         MyGC::do_gc(net);
+                                        if (should_compact)(net) {
+                                            let mut cptr = MyCPTR::new();
+                                            cptr.init(net);
+                                            cptr.compact(net);
+                                            history.iter_mut().for_each(|x|{ x.0 = (cptr.adjust_v(x.0)); });
+                                        }
+
                                     } else {
                                         // No interaction. Must be an abstraction on port 2
                                         if let CstrK::FanOut(_) = c { panic!("Reaching a fan out by an aux port"); }
