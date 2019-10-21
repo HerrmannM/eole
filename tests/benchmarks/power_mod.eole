@@ -1,15 +1,8 @@
+// The identity function
 id = i->i.
 
-pair  = x->y->z->(z x y).
-fst   = x->y->x.
-snd   = x->y->y.
 
-true  = fst.
-false = snd.
-if    = b->then_f->else_f->b then_f else_f.
-
-
-
+// First Church's numbers
 zero    = f->x->x.
 one     = f->x->f x.
 two     = f->x->f (f x).
@@ -18,24 +11,14 @@ four    = f->x->f (f (f (f x))).
 five    = f->x->f (f (f (f (f x)))).
 
 
+// Simple operations on Church's numbers
 succ    = a->f->x->f (a f x).
-
 plus    = a->a succ.
-
-times    = a->b->a (plus b) zero.
-
+times   = a->b->a (plus b) zero.
 pred    = a->f->x->a(g->h->h (g f))(u->x)(u->u).
+minus   = a->b->a pred b.
 
-minus = a->b->a pred b.
-
-
-
-is_zero = n->n (x->false) true.
-
-leq = a -> b -> is_zero (minus a b).
-
-
-
+// Modulo operation
 mod =
   (a->b->(b (c->d->(c(e->(d(f->g->(f(e f g)))e))))
               (c->(c(d->e->e)))
@@ -45,24 +28,7 @@ mod =
 
 
 
-nextfact = (
-  p->(
-    with n1 = (p fst),
-    with n2 = (succ (p snd)),
-    (pair (times n1 n2) n2)
-  )
-).
-
-fact = (
-  n->(n nextfact (pair one zero) fst)
-).
-
-
-
-
-six         = plus five one.
-seven       = plus five two.
-
+// Some church numbers
 ten         = plus five five.
 thirteen    = plus ten three.
 
