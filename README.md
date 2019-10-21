@@ -1,22 +1,75 @@
-# Éole - Évaluateur Optimal de Lambda Expressions
-A Lévy-optimal lambda evaluator without oracle
+# Éole - A Lévy-optimal lambda calculus evaluator (without oracle).
 
-## Warning
-Éole is *not proven correct* yet. This is a work in progress.
-It may actually not work!
-However, if it does not work for the full untyped lambda calculus, it may work for a fragment.
+Éole is a Lévy-optimal lambda calculus evaluator, and is *asymptotically* faster than conventional evaluator.
+It can compute "quickly enough" things that non-Lévy-optimal can't. For example, using church numerals, it can compute [200^200%31](tests/benchmarks/power_mod.eole) without doing anything special (i.e. without using mathematical properties).
 
-## What's the point?
-Lévy-optimal lambda calculus evaluator can be asymptopticaly faster than "conventional" evaluator,
-which allows them to compute things that others can't (in a lifetime).
-For example, using church numerals, it can compute 200^200%31 without doing anything special
-(i.e. without using mathematical properties).
-   * See this [stack overflow question](https://stackoverflow.com/questions/31707614/why-are-%CE%BB-calculus-optimal-evaluators-able-to-compute-big-modular-exponentiation)
-   * See [this paper](https://www.semanticscholar.org/paper/Safe-Operators%3A-Brackets-Closed-Forever-Optimizing-Asperti-Chroboczek/1819303dbf554bf2fb0b5bdfe42130ba9df50eaa) containing several benchmark (the paper is behind a paywall, but the figures with the results are accessible).
-   * See [this recent summary by Asperti (2017)](https://arxiv.org/abs/1701.04240), for a quick intro and why it is not widely use.
+Éole...
+  * **handles the full untyped lambda calculus**
+    * based on an interaction network (a graph rewriting system).
+    * Lévy-optimaly (avoids duplication of redexes by sharing).
+  * **has an optional garbage collector** (on by default)
+    * It is also modular: you can create your own!
+    * Specialized at compile time
+  * **has an optional memory compactor** (off by default)
+  * **accepts some limits**
+    * reduction steps
+    * readback depths (while converting the internal graph back to a lambda expression)
+  * **can show you some statistics**
+  * **can create a representation of the internal structure with graphviz:**
+  
+<img alt="gif for delta id" src="doc/readme/delta_id.gif" width="50%" />
 
+The gif above shows a reduction of
+```
+delta = a->a a.
+
+delta (b->b).
+```
+
+In the above graph, nodes have the follwoing format: `UID <kind>` with `<kind>`:
+  * `λ x`: lambda abstraction, declaring the variable `x`
+  * `λ● x`: lambda abstraction, declaring the **unused** variable `x`
+    * We have the 3 special nodes Root, Sink and Erase which are *meta nodes*
+  * `@`: Application node
+  * `▼ stem` : "Sharer" node
+  * `▼ ID` : "Share boundary" node called `fan in`
+  * `▲ ID` : "Share boundary" node called `fan out`
+  
+The flashy red arrows show the possible interactions (several possible),
+while the flashy green node indicates the next interaction (only one).
+The other filled nodes between the root and the green show the stack currently stacked and that will eventually be considered for reduction.
+
+To follow the description of the steps, get the [static pdf](doc/readme/delta_id.pdf):
+
+0. Initial graph:
+    * See how `delta = a->a a.` is translated into a function call `(λdelta->...)(λa->a a)`,
+    * See how the reference to `a` is shared through a special "stem fan" node.
+    * See how the identity `(λb -> b)` only involves the abstraction node:
+      the variable is represented by targeting the asbtraction node itself.
+1. After reduction of `(λdelta->...)(λa->a a)`.
+    * Ready to reduce `(λa-> a a)(λb -> b)`.
+2. After reduction of `(λa-> a a)(λb -> b)`.
+    * We have `(λb -> b)(λb -> b)`, but see how `(λb -> b)` appears only once in the graph.
+    * The application node `8` is stacked.
+3. We start the actual duplication of `(λb -> b)`.
+    * The `stem` fan "differentiates" itself into labeled fans.
+    * See how the "body" (empty here) is still shared (between the fans).
+    * Because the application was stacked, it is the next interacting node.
+4. After the reduction of `(λb -> b)(λb -> b)` (application node 8).
+    * The application is reduced even if the body of the function is still being shared
+5. After the "resolution" of the share, we reach the final state `(λb -> b)`.
+
+---
 
 ## Context
+
+### Warning
+* **Éole is experimental and not proven (WIP)**
+  * Only use for research and curiosity purpose!
+* **"Lévy-optimal" does not means "efficient"**
+  * Even if it is asymptotically faster, it is not really efficient in common scenario.
+    See [this recent summary by Asperti (2017)](https://arxiv.org/abs/1701.04240) for a quick overview also covering this point.
+
 Éole is implemented following ideas from Levy, Lamping, Asperti, Lafont and many others.
 Lambda expressions are converted into an interaction net (a computational model) which is then reduced.
 A good introduction can be found in the book:
@@ -52,8 +105,8 @@ In other words: do your interactions, and when two fans meet, ask the oracle wha
 I like to think (probably inaccurately) about optimal reductions as:
 > Optimal reduction = interaction net + oracle
 
-### Éole approach
-Éole changes are:
+### The Éole approach
+Éole's changes are:
 
 1. Its interaction nets are directed
 1. It has two kinds of fans in:
@@ -69,6 +122,7 @@ This break the spirit of the *local rewriting rules*, but isn't a problem at all
 
 More details, are to come in a paper (hopefully with a proof of Éole),
 along with a discussion on the garbage collector and reduction strategies (the current implementation offers 2 of them, see below).
+
 
 ## Using the system (Linux instructions, probably works on mac too)
 
