@@ -6,6 +6,16 @@ A Lévy-optimal lambda evaluator without oracle
 It may actually not work!
 However, if it does not work for the full untyped lambda calculus, it may work for a fragment.
 
+## What's the point?
+Lévy-optimal lambda calculus evaluator can be asymptopticaly faster than "conventional" evaluator,
+which allows them to compute things that others can't (in a lifetime).
+For example, using church numerals, it can compute 200^200%31 without doing anything special
+(i.e. without using mathematical properties).
+   * See this [stack overflow question](https://stackoverflow.com/questions/31707614/why-are-%CE%BB-calculus-optimal-evaluators-able-to-compute-big-modular-exponentiation)
+   * See [this paper](https://www.semanticscholar.org/paper/Safe-Operators%3A-Brackets-Closed-Forever-Optimizing-Asperti-Chroboczek/1819303dbf554bf2fb0b5bdfe42130ba9df50eaa) containing several benchmark (the paper is behind a paywall, but the figures with the results are accessible).
+   * See [this recent summary by Asperti (2017)](https://arxiv.org/abs/1701.04240), for a quick intro and why it is not widely use.
+
+
 ## Context
 Éole is implemented following ideas from Levy, Lamping, Asperti, Lafont and many others.
 Lambda expressions are converted into an interaction net (a computational model) which is then reduced.
