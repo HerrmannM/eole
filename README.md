@@ -1,7 +1,7 @@
 # Éole - A Lévy-optimal lambda calculus evaluator (without oracle).
 
-Éole is a Lévy-optimal lambda calculus evaluator, and is *asymptotically* faster than conventional evaluator.
-It can compute "quickly enough" things that non-Lévy-optimal can't. For example, using church numerals, it can compute [200^200%31](tests/benchmarks/power_mod.eole) without doing anything special (i.e. without using mathematical properties).
+Éole is a Lévy-optimal lambda calculus evaluator, and is *asymptotically* faster than conventional evaluators.
+It can compute "quickly enough" things that non-Lévy-optimal evaluators can't. For example, it can compute [200^200%31](tests/benchmarks/power_mod.eole) wih Church's numeral without doing anything special (i.e. without using mathematical properties).
 
 Éole...
   * **handles the full untyped lambda calculus**
