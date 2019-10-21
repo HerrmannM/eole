@@ -6,7 +6,7 @@ It can compute "quickly enough" things that non-Lévy-optimal can't. For example
 Éole...
   * **handles the full untyped lambda calculus**
     * based on an interaction network (a graph rewriting system).
-    * Lévy-optimaly (avoids duplication of redexes by sharing).
+    * Lévy-optimally (avoids duplication of redexes by sharing).
   * **has an optional garbage collector** (on by default)
     * It is also modular: you can create your own!
     * Specialized at compile time
@@ -26,7 +26,7 @@ delta = a->a a.
 delta (b->b).
 ```
 
-In the above graph, nodes have the follwoing format: `UID <kind>` with `<kind>`:
+In the above graph, nodes have the following format: `UID <kind>` with `<kind>`:
   * `λ x`: lambda abstraction, declaring the variable `x`
   * `λ● x`: lambda abstraction, declaring the **unused** variable `x`
     * We have the 3 special nodes Root, Sink and Erase which are *meta nodes*
@@ -135,7 +135,7 @@ cargo build --release
 This will create an executable in the `target/release` folder.
 
 Éole can generate `dot files` that can then be passed to [graphviz](https://graphviz.org/) to draw the several reduction steps.
-Install graphviz if you want to visualize what is going on!
+Install `graphviz` if you want to visualize what is going on!
 The `./dotgraph.sh` script creates the graphs and then assemble them using `pdfunite`
 On Archlinux, pdfunite is provided by poppler.
 Check your distribution for things around `poppler` (like `poppler-utils`) if you want it.
@@ -258,6 +258,3 @@ See the examples in the `tests` folder.
 # TODO:
 
 * Implement the "read" features (done in the parser but not in the interpreter).
-
-* Fix design flaw in reduce full: right now, the fanstack compensate for it by storing an extra id.
-  This extra id needs to be adjust when compacting, and can be costly (see ./tests/benchmarks/README.md).
