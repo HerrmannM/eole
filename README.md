@@ -7,13 +7,16 @@ It can compute "quickly enough" things that non-Lévy-optimal can't. For example
   * **handles the full untyped lambda calculus**
     * based on an interaction network (a graph rewriting system).
     * Lévy-optimally (avoids duplication of redexes by sharing).
+  * **comes with 2 reduction strategies**
+    * reduce to normal form (default)
+    * reduce to weak head normal form
   * **has an optional garbage collector** (on by default)
-    * It is also modular: you can create your own!
-    * Specialized at compile time
+    * it is also modular: you can create your own!
+    * specialized at compile time
   * **has an optional memory compactor** (off by default)
   * **accepts some limits**
     * reduction steps
-    * readback depths (while converting the internal graph back to a lambda expression)
+    * readback depth (while converting the internal graph back to a lambda expression)
   * **can show you some statistics**
   * **can create a representation of the internal structure with graphviz:**
   
@@ -252,9 +255,3 @@ A file can contains several definitions, terminated by a dot: `symbol = term.`
 Finally, a file can contain one term to evaluate, also dot-terminated.
 
 See the examples in the `tests` folder.
-
-
-
-# TODO:
-
-* Implement the "read" features (done in the parser but not in the interpreter).
