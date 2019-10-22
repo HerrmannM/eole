@@ -382,10 +382,9 @@ impl<MyGC:GC> Net<MyGC> {
     pub fn new_node(&mut self, kind:NodeKind) -> usize {
         self.nb_used+=1;
         let nn = Node(kind, [Self::NULL;3]);
-        /*
                 self.nodes.push(nn);
                 self.nodes.len()-1
-                    */
+        /*
         let res = match self.available_indexes.pop() {
             Some(idx) => {
                 self.nb_reused+=1;
@@ -398,6 +397,7 @@ impl<MyGC:GC> Net<MyGC> {
             }
         };
         res
+                    */
     }
 
     /// Create a new abstraction node.

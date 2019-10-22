@@ -1,0 +1,5 @@
+// https://github.com/HerrmannM/eole/issues/3
+// Problem: wrong result
+// Output of eole contains a (m48->m48) near the end. Should be something like (mx->my) with x!=y
+
+(a->((b->((c->c) ((d->(e->(f->((((e d) f) (a (e e))) ((f (g->b)) (h->(i->(h (b (j->(b j))))))))))) b))) (k->((l->(((a (a k)) ((a l) (k a))) (m->((k (n->(o->m))) k)))) ((p->(q->(k a))) (r->(s->((t->r) (u->(a (v->r))))))))))).

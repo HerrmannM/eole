@@ -144,26 +144,38 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
 
         // History stack
         let mut history: Vec<(Vertex, net::NodeKind)> = vec![];
+        // History occurences
+        let mut history_occ:HashMap<usize, i64> = HashMap::new();
 
         // Main loop
         loop {
+            println!("---");
             if test_credit && credit == 0 { break; }
 
             // Check the history of nodes:
             match history.pop(){
                 // Empty: locate the next destructor starting from the root
                 None => {
-                    match locate_next_destructor(net, &mut history, Net::<MyGC>::ROOT_VERTEX) {
+                    match locate_next_destructor(net, &mut history, Net::<MyGC>::ROOT_VERTEX, &mut history_occ) {
                         None => { return; }
-                        Some(vert_kind) => { history.push(vert_kind); }
+                        Some(vert_kind) => {
+                            *history_occ.entry(vert_kind.0.get_index()).or_insert(0) += 1;
+                            println!("[main loop] Push {:?}", vert_kind);
+                            history.push(vert_kind);
+                        }
                     }
                 }
                 // We have something
                 Some(head) => {
-                    let (vertex, kind) = &head;
+                    let (vertex, _) = &head;
                     let (index, port) = vertex.as_tuple();
+                    let kind = net.get_node(index).0.clone();
                     assert!(net.get_node(index).1!=[Net::<MyGC>::NULL; 3], "Corrupted history: contains a null node. [main loop, history.pop()]");
-                    match kind {
+                    // Occurence change
+                    *history_occ.get_mut(&index).expect("[1] Cannot find matching occurrence") -= 1;
+
+
+                    match &kind {
                         NodeKind::CstrK(CstrK::Abs(_,_)) => { /* */ }
 
                         NodeKind::CstrK(CstrK::FanOut(l)) => { /* */ }
@@ -180,9 +192,14 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
                                         // Manage the credit
                                         if test_credit {credit-=1;}
 
+                                        // Occurence check
+                                        assert!(*history_occ.entry(index).or_insert(0) == 0, "bam");
+                                        assert!(*history_occ.entry(target_i).or_insert(0) == 0, "bam");
+
                                         // If reaching the target of the main port, *must* be a constructor.
                                         // Action (graph printing)
                                         action(net, (index, &history) );
+
 
                                         // Interaction.
                                         let c = c.clone();
@@ -202,6 +219,8 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
                                         assert!(target_p.0 == 2, "Reaching an Abstraction by the body");
                                         // Backtrack until we find an application;
                                         // visit its argument
+                                        *history_occ.entry(head.0.get_index()).or_insert(0) += 1;
+                                        println!("[Backtract - Repush head] Push {:?}", head);
                                         history.push(head); // Must be done to take care of the current node
                                         loop {
                                             match history.pop(){
@@ -212,12 +231,20 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
                                                 Some((v,k)) => {
                                                     let hl = history.len();
                                                     let (i,p) = v.as_tuple();
+
+                                                    // Occurence change
+                                                    *history_occ.get_mut(&i).expect("[2] Cannot find matching occurrence") -= 1;
+
                                                     assert!(net.get_node(i).1!=[Net::<MyGC>::NULL; 3], "Corrupted history: contains a null node. [backtrack loop, history.pop()]");
                                                     match k {
                                                         NodeKind::DstrK(DstrK::Apply) => {
-                                                            match locate_next_destructor(&net, &mut history, mkv(i,2)) {
+                                                            let mut ho = history_occ.clone();
+                                                            match locate_next_destructor(&net, &mut history, mkv(i,2), &mut ho) {
                                                                 None => { history.truncate(hl); } // loop. Remove items added by locate_next_destructor
                                                                 Some(c) => {
+                                                                    history_occ = ho;
+                                                                    *history_occ.entry(c.0.get_index()).or_insert(0) += 1;
+                                                                    println!("[Backtract look args - Push next head] Push {:?}", c);
                                                                     history.push(c);
                                                                     break;
                                                                 }
@@ -233,7 +260,11 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
                                 // Target Destructor
                                 // Destructor: stack and relaunch
                                 NodeKind::DstrK(d) => {
+                                    *history_occ.entry(head.0.get_index()).or_insert(0) += 1;
+                                    println!("[Main loop restack destr] Push {:?}", head);
                                     history.push(head);
+                                    println!("[Main loop stack next] Push {:?}", (target_v, NodeKind::DstrK(*d)));
+                                    *history_occ.entry(target_v.get_index()).or_insert(0) += 1;
                                     history.push((target_v, NodeKind::DstrK(*d)));
                                 }
                             }
@@ -250,7 +281,8 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
 /// On failure, the history must be restored (i.e. truncated) back to its original length.
 #[inline]
 fn locate_next_destructor<MyGC:GC>(
-    net:&Net::<MyGC>, history:&mut Vec<(Vertex, net::NodeKind)>, mut base:Vertex
+    net:&Net::<MyGC>, history:&mut Vec<(Vertex, net::NodeKind)>, mut base:Vertex,
+    history_occ: &mut HashMap<usize, i64>
     ) -> Option<(Vertex, net::NodeKind)> {
     loop {
         let next_v = net.follow(base);
@@ -261,7 +293,9 @@ fn locate_next_destructor<MyGC:GC>(
         match &next_n.0 {
             NodeKind::CstrK(CstrK::Abs(_,_)) => match next_p.0 {
                 0 => {
+                    *history_occ.entry(next_i).or_insert(0) += 1;
                     history.push((next_v, next_n.0.clone()));
+                    println!("[locate destr] Push {:?}", (next_v, next_n.0.clone()));
                     base = mkv(next_i, 1);
                 }
                 2 => {return None;}
@@ -276,7 +310,9 @@ fn locate_next_destructor<MyGC:GC>(
                         panic!("Cannot pair fan out {:?}\n{:?}",(next_i, l), history);
                     }
                     Some(p) => {
+                        *history_occ.entry(next_i).or_insert(0) += 1;
                         history.push((next_v, next_n.0.clone()));
+                        println!("[locate destr] Push {:?}", (next_v, next_n.0.clone()));
                         base = Vertex::new(next_i, p);
                     }
                 }
@@ -294,9 +330,10 @@ fn locate_next_destructor<MyGC:GC>(
 pub fn get_matching_fan<MyGC:GC>(net:&Net::<MyGC>, fan_out_l:u64, history:&Vec<(Vertex, net::NodeKind)>) -> Option<Port> {
     let mut lab_skip:HashMap<u64, i64> = HashMap::new();
 
-    for (v, k) in (history.iter()).rev() {
+    for (v, _) in (history.iter()).rev() {
+        let k = net.get_node(v.get_index()).0.clone();
         assert!(net.get_node(v.get_index()).1!=[Net::<MyGC>::NULL; 3], "Corrupted history: contains a null node. [matching fan history.iter()]");
-        match k {
+        match &k {
             NodeKind::CstrK(CstrK::FanOut(l)) => {
                 *lab_skip.entry(*l).or_insert(0) += 1;
             }
