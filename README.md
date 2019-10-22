@@ -5,6 +5,9 @@ It can compute "quickly enough" things that non-Lévy-optimal evaluators can't. 
 
 Éole...
   * **handles the full untyped lambda calculus**
+    * **WARNING:** this is not proven yet!
+      And if Éole can handles at least a fragment  of the lambda calculus, the full untyped lambda calculus is questionable.
+      (making this warning clearer, see [below for the original warning](#warning)).
     * based on an interaction network (a graph rewriting system).
     * Lévy-optimally (avoids duplication of redexes by sharing).
   * **comes with 2 reduction strategies**
