@@ -162,7 +162,7 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
                 Some(head) => {
                     let (vertex, kind) = &head;
                     let (index, port) = vertex.as_tuple();
-                    assert!(net.get_node(index).1!=[Net::<MyGC>::NULL; 3], "baam");
+                    assert!(net.get_node(index).1!=[Net::<MyGC>::NULL; 3], "Corrupted history: contains a null node. [main loop, history.pop()]");
                     match kind {
                         NodeKind::CstrK(CstrK::Abs(_,_)) => { /* */ }
 
@@ -172,7 +172,7 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
                         NodeKind::DstrK(d) => {
                             let target_v = net.follow(main(index));
                             let (target_i, target_p) = target_v.as_tuple();
-                            assert!(net.get_node(target_i).1!=[Net::<MyGC>::NULL; 3], "baam");
+                            assert!(net.get_node(target_i).1!=[Net::<MyGC>::NULL; 3], "Reaching a null node while checking a destructor's main port");
                             match &net.get_node(target_i).0 {
                                 // Target Constructor
                                 NodeKind::CstrK(c) => {
@@ -212,7 +212,7 @@ pub fn get_reducer_full<'a, MyGC: GC, MyCPTR: Compactor>(
                                                 Some((v,k)) => {
                                                     let hl = history.len();
                                                     let (i,p) = v.as_tuple();
-                                                    assert!(net.get_node(i).1!=[Net::<MyGC>::NULL; 3], "baam");
+                                                    assert!(net.get_node(i).1!=[Net::<MyGC>::NULL; 3], "Corrupted history: contains a null node. [backtrack loop, history.pop()]");
                                                     match k {
                                                         NodeKind::DstrK(DstrK::Apply) => {
                                                             match locate_next_destructor(&net, &mut history, mkv(i,2)) {
@@ -255,7 +255,7 @@ fn locate_next_destructor<MyGC:GC>(
     loop {
         let next_v = net.follow(base);
         let (next_i, next_p) = next_v.as_tuple();
-        assert!(net.get_node(next_i).1!=[Net::<MyGC>::NULL; 3], "baam");
+        assert!(net.get_node(next_i).1!=[Net::<MyGC>::NULL; 3], "Reaching a null node while looking for a next destructor");
         let next_n = net.get_node(next_i);
         //
         match &next_n.0 {
@@ -295,7 +295,7 @@ pub fn get_matching_fan<MyGC:GC>(net:&Net::<MyGC>, fan_out_l:u64, history:&Vec<(
     let mut lab_skip:HashMap<u64, i64> = HashMap::new();
 
     for (v, k) in (history.iter()).rev() {
-        assert!(net.get_node(v.get_index()).1!=[Net::<MyGC>::NULL; 3], "baam");
+        assert!(net.get_node(v.get_index()).1!=[Net::<MyGC>::NULL; 3], "Corrupted history: contains a null node. [matching fan history.iter()]");
         match k {
             NodeKind::CstrK(CstrK::FanOut(l)) => {
                 *lab_skip.entry(*l).or_insert(0) += 1;
