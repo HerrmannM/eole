@@ -1,6 +1,10 @@
+# UPDATE 23/10/2019
+We have a counter example (see #1), so Éole DOES NOT work for the full untyped langage calculus!
+We don't know what class of terms it can work on, but you still may find it interesting ;-)
+
 # Éole - A Lévy-optimal lambda calculus evaluator (without oracle).
 
-Éole is a Lévy-optimal lambda calculus evaluator, and is *asymptotically* faster than conventional evaluators.
+Éole is a Lévy-optimal lambda calculus evaluator, and can in some scenario be *asymptotically* faster than conventional evaluators.
 It can compute "quickly enough" things that non-Lévy-optimal evaluators can't. For example, it can compute [200^200%31](tests/benchmarks/power_mod.eole) wih Church's numeral without doing anything special (i.e. without using mathematical properties).
 
 Éole...
