@@ -327,26 +327,26 @@ fn locate_next_destructor<MyGC:GC>(
 
 
 #[inline]
-pub fn get_matching_fan<MyGC:GC>(net:&Net::<MyGC>, fan_out_l:u64, history:&Vec<(Vertex, net::NodeKind)>) -> Option<Port> {
-    let mut lab_skip:HashMap<u64, i64> = HashMap::new();
+pub fn get_matching_fan<MyGC:GC>(net:&Net::<MyGC>, fan_out_l:i64, history:&Vec<(Vertex, net::NodeKind)>) -> Option<Port> {
+    let mut lab_skip:HashMap<i64, i64> = HashMap::new();
 
     for (v, _) in (history.iter()).rev() {
         let k = net.get_node(v.get_index()).0.clone();
         assert!(net.get_node(v.get_index()).1!=[Net::<MyGC>::NULL; 3], "Corrupted history: contains a null node. [matching fan history.iter()]");
         match &k {
             NodeKind::CstrK(CstrK::FanOut(l)) => {
-                *lab_skip.entry(*l).or_insert(0) += 1;
+                *lab_skip.entry(l.abs()).or_insert(0) += 1;
             }
 
             NodeKind::DstrK(DstrK::FanIn(FIStatus::Labeled(l))) => {
-                match lab_skip.get_mut(l) {
+                match lab_skip.get_mut(&l.abs()) {
                     None => {
-                        if *l == fan_out_l { return Some(v.get_port()); }
+                        if l.abs() == fan_out_l.abs() { return Some(v.get_port()); }
                     }
                     Some(nb) => {
                         // Found
                         if *nb == 0 {
-                            if *l == fan_out_l { return Some(v.get_port()); }
+                            if l.abs() == fan_out_l.abs() { return Some(v.get_port()); }
                         }
                         else { *nb -=1; }
                     }

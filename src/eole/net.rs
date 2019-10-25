@@ -26,7 +26,7 @@ use std::collections::HashMap;
 
 /// Type of label.
 /// Will be upgraded to 128bits if someone ever reach the 64bits limit....
-pub type Label = u64;
+pub type Label = i64;
 
 /// Status of a fan in.
 #[derive(Copy,Clone,Debug,PartialEq,Eq)]
@@ -43,7 +43,7 @@ impl FIStatus {
     #[inline]
     pub fn is_matching (&self, fan_out_label:Label) -> bool {
         match self {
-            Self::Labeled(l) => *l == fan_out_label,
+            Self::Labeled(l) => l.abs() == fan_out_label.abs(),
             Self::Stem => false
         }
     }
@@ -358,7 +358,7 @@ impl<MyGC:GC> Net<MyGC> {
 
     /// Get a new label
     #[inline]
-    pub fn new_label(&mut self) -> u64 {
+    pub fn new_label(&mut self) -> i64 {
         let res = self.next_label;
         self.next_label+=1;
         res
@@ -624,7 +624,7 @@ impl<MyGC:GC> Net<MyGC> {
                         let app1 = self.new_app();              // App1/M   -> oldfan/A1
                         let app2 = self.new_app();              // App2/M   -> oldfan/A2
                         let fou1 = self.new_fout(label);        // FOut1/M  <- oldapp/A1
-                        let fin2 = self.new_fin(Labeled(label));// FIn2/M   -> oldapp/A2
+                        let fin2 = self.new_fin(Labeled(-label.abs()));// FIn2/M   -> oldapp/A2
                         // "External" stitching
                         // Old -> New
                         self.stitch_old_new(mkv(oldapp, 1), main(fou1));
@@ -659,7 +659,7 @@ impl<MyGC:GC> Net<MyGC> {
                         let (oldfan, oldabs) = (did, cid);
                         // Create a label if stem, else continue the sharing
                         let label = match in_status {
-                            Labeled(l) => l,
+                            Labeled(l) => if l < 0 { self.new_label() } else { l },
                             Stem => self.new_label()
                         };
                         // Create the new nodes
